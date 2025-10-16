@@ -8,6 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Esto es un comentario de prueba
 model Departure {
   idDeparture    String      @id @map("id_departure") @db.Uuid
   status         Attendance?
