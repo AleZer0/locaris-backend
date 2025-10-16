@@ -1,15 +1,141 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql",
   url      = env("DATABASE_URL")
+  schemas=["app"],
+}
+
+model Departure {
+  idDeparture     String     @id @map("id_departure") @db.Uuid
+  status          Attendance?
+  idUsuario       String?    @map("id_usuario") @db.Uuid
+  createdAt       DateTime?  @map("created_at") @db.Date
+  updatedAt       DateTime?  @map("updated_at") @db.Date
+  timeDepartures  DateTime?  @map("time_departures") @db.Timetz(6)
+  idEntrie        String?    @map("id_entrie") @db.Uuid
+
+  entries         Entry?     @relation(fields: [idEntrie], references: [idEntrie], onDelete: NoAction, onUpdate: NoAction, map: "fk_entries")
+  user            User?      @relation(fields: [idUsuario], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_departures")
+
+  @@map("departures")
+  @@schema("app")
+}
+
+model Entry {
+  idEntrie     String     @id @map("id_entrie") @db.Uuid
+  status       Attendance?
+  idUsuario    String?    @map("id_usuario") @db.Uuid
+  createdAt    DateTime?  @map("created_at") @db.Date
+  updatedAt    DateTime?  @map("updated_at") @db.Date
+  timeEntrie   DateTime?  @map("time_entrie") @db.Timetz(6)
+
+  departures   Departure[]
+  user         User?      @relation(fields: [idUsuario], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_entries")
+
+  @@map("entries")
+   @@schema("app")
+}
+
+model Schedule {
+  id             String           @id @db.Uuid
+  tipoHorario    String?          @map("tipo_horario")
+  createdAt      DateTime?        @map("created_at") @db.Date
+  updatedAt      DateTime?        @map("updated_at") @db.Date
+  startTime      String?          @map("start_time")
+  endTime        String?          @map("end_time")
+  userSchedules  UserSchedule[]   @ignore
+
+  @@map("schedules")
+   @@schema("app")
+}
+
+model UserSchedule {
+  id          String?     @db.Uuid
+  idUser      String?     @map("id_user") @db.Uuid
+  idSchedule  String?     @map("id_schedule") @db.Uuid
+
+  schedule    Schedule?   @relation(fields: [idSchedule], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_schedules_user")
+  user        User?       @relation(fields: [idUser], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_schedules")
+
+  @@map("user_schedules")
+  @@ignore
+   @@schema("app")
+}
+
+model User {
+  id                String              @id @db.Uuid
+  name              String?
+  userName          String?             @map("user_name")
+  firstName         String?             @map("fist_name")
+  lastName          String?             @map("last_hame")
+  createdAt         DateTime?           @map("created_at") @db.Date
+  updatedAt         DateTime?           @map("updated_at") @db.Date
+  role              UserRol?
+  password          String?
+  email             String?
+  phone             String?
+
+  departures        Departure[]
+  entries           Entry[]
+  userSchedules     UserSchedule[]      @ignore
+  workSpacesUsers   WorkSpaceUser[]     @ignore
+
+  @@map("users")
+   @@schema("app")
+}
+
+model WorkSpace {
+  idWorkSpace      String              @id @map("id_work_space") @db.Uuid
+  coordinate1      String?             @map("coordinate_1") @db.Char
+  coordinate2      String?             @map("coordinate_2") @db.Char
+  coordinate3      String?             @map("coordinate_3") @db.Char
+  coordinate4      String?             @map("coordinate_4") @db.Char
+  place            String?             @db.Char
+  createdAt        DateTime?           @map("created_at") @db.Date
+  updatedAt        DateTime?           @map("updated_at") @db.Date
+  nameNormalist    String?             @map("name_normalist") @db.Char
+  name             String?             @db.Char
+  workSpacesUsers  WorkSpaceUser[]     @ignore
+
+  @@map("work_spaces")
+   @@schema("app")
+}
+
+model WorkSpaceUser {
+  id            String?      @db.Uuid
+  idUser        String?      @map("id_user") @db.Uuid
+  idWorkSpace   String?      @map("id_work_space") @db.Uuid
+
+  user          User?        @relation(fields: [idUser], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_work_space")
+  workSpace     WorkSpace?   @relation(fields: [idWorkSpace], references: [idWorkSpace], onDelete: NoAction, onUpdate: NoAction, map: "fk_work_space_user")
+
+  @@map("work_spaces_users")
+   @@schema("app")
+  @@ignore
+}
+
+enum UserRol {
+  employee
+  admin
+
+  @@map("user_rol")
+   @@schema("app")
+}
+enum GeneralStatus {
+  active
+  inactive
+
+  @@map("general_status")
+   @@schema("app")
+}
+enum Attendance {
+  normal
+  tarde
+
+  @@map("attendance")
+   @@schema("app")
 }
